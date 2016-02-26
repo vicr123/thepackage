@@ -22,7 +22,10 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
         QApplication::processEvents();
     }
 
-    for (QString update : QString(updateCheck->readAllStandardOutput()).split("\n")) {
+    QStringList listOfUpdates = QString(updateCheck->readAllStandardOutput()).split("\n");
+    listOfUpdates.removeAll("");
+
+    for (QString update : listOfUpdates) {
         if (update != "") {
             QListWidgetItem *i = new QListWidgetItem(update);
             i->setIcon(QIcon::fromTheme("application-x-executable"));
@@ -33,6 +36,12 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
     ui->pushButton->setEnabled(true);
     ui->pushButton_2->setEnabled(true);
     ui->progressBar->setVisible(false);
+
+    if (listOfUpdates.count() == 0) {
+        ui->label->setText("Thanks for stopping by. There aren't any new updates avaliable.");
+        ui->pushButton->setEnabled(false);
+    }
+
 }
 
 UpdateWindow::~UpdateWindow()
