@@ -6,3 +6,4 @@ Name=thePackage Updater
 Comment=System Software Updates
 Exec=thepackage -u
 Icon=system-software-update
+Categories=System
