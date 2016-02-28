@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QProcess>
 #include <QDebug>
+#include <QFile>
+#include <QTemporaryFile>
 
 class UpdateWorker : public QObject
 {

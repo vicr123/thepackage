@@ -12,6 +12,7 @@
 #include <QPropertyAnimation>
 #include <QThread>
 #include <QScrollBar>
+#include <QFileSystemWatcher>
 
 #include "package.h"
 #include "worker.h"
@@ -65,6 +66,10 @@ private slots:
 
     void on_pushButton_7_clicked();
 
+    void on_removePacmanLock_toggled(bool checked);
+
+    void lockFileChanged();
+
 private:
     Ui::MainWindow *ui;
 
@@ -73,6 +78,9 @@ private:
     void processTransaction(QStringList install, QStringList remove);
 
     bool readyToCommit = false;
+    bool committing = false;
+
+    QFileSystemWatcher* watcher;
 };
 
 #endif // MAINWINDOW_H

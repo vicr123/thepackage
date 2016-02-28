@@ -14,10 +14,17 @@
    <string>thePackage Updater</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="system-software-update"/>
+   <iconset theme="system-software-update">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>20</number>
+    </property>
+    <property name="rightMargin">
+     <number>20</number>
+    </property>
     <item>
      <widget class="QLabel" name="label_3">
       <property name="font">
@@ -70,6 +77,69 @@
      </widget>
     </item>
     <item>
+     <widget class="QFrame" name="pacmanLock">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Another package manager is already running. Only remove the lock file if you're sure another package manager isn't running.</string>
+         </property>
+         <property name="scaledContents">
+          <bool>false</bool>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="removePacmanLock">
+         <property name="text">
+          <string>Remove Lock File</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <spacer name="horizontalSpacer">
@@ -90,7 +160,8 @@
          <string>Close</string>
         </property>
         <property name="icon">
-         <iconset theme="window-close"/>
+         <iconset theme="window-close">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -100,7 +171,8 @@
          <string>Install System Updates</string>
         </property>
         <property name="icon">
-         <iconset theme="system-software-update"/>
+         <iconset theme="system-software-update">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>

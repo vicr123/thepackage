@@ -15,8 +15,11 @@ void Worker::process() {
     connect(pacman, SIGNAL(readyReadStandardOutput()), this, SLOT(outputAvaliable()));
     connect(pacman, SIGNAL(readyReadStandardError()), this, SLOT(outputAvaliable()));
 
-    QString command("kdesu --noignorebutton -t bash -c ");
     QString shellScript;
+
+    if (QFile("/var/lib/pacman/db.lck").exists()) {
+        shellScript.append("rm /var/lib/pacman/db.lck\n");
+    }
 
     if (mainWindow->packagesToRemove->count() > 0) {
         QString toRemove;
@@ -46,8 +49,6 @@ void Worker::process() {
     shell->setAutoRemove(false);
     delete shell;
 
-    command.append("");
-
     pacman->start("kdesu --noignorebutton -t -d \"" + tempFile + "\"");
 
     if (!pacman->waitForStarted(-1)) {
@@ -58,13 +59,15 @@ void Worker::process() {
 
     QFile(tempFile).remove();
 
-
+    stdOutput.append("\n[Installation complete]");
+    emit output(stdOutput);
     emit finished(pacman->exitCode());
 }
 
 void Worker::outputAvaliable() {
     QString pacOutput = pacman->readAllStandardOutput();
     pacOutput.append(pacman->readAllStandardError());
+    pacOutput.replace("[Y/n]", "");
     qDebug() << pacOutput;
     stdOutput.append(pacOutput);
 

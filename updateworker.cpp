@@ -15,7 +15,25 @@ void UpdateWorker::process() {
     connect(pacman, SIGNAL(readyReadStandardOutput()), this, SLOT(outputAvaliable()));
     connect(pacman, SIGNAL(readyReadStandardError()), this, SLOT(outputAvaliable()));
 
-    pacman->start("kdesu --noignorebutton -t -d bash -c \"pacman -Syu --noconfirm --noprogressbar --color never\"");
+    QString shellScript;
+
+    if (QFile("/var/lib/pacman/db.lck").exists()) {
+        shellScript.append("rm /var/lib/pacman/db.lck\n");
+    }
+
+    shellScript.append("pacman -Syu --noconfirm --noprogressbar --color never\n");
+
+    QTemporaryFile* shell = new QTemporaryFile();
+    shell->open();
+    shell->write(shellScript.toUtf8());
+    shell->flush();
+    shell->close();
+    QString tempFile = shell->fileName();
+    shell->setPermissions(QFile::ExeOwner);
+    shell->setAutoRemove(false);
+    delete shell;
+
+    pacman->start("kdesu --noignorebutton -t -d \"" + tempFile + "\"");
 
     if (!pacman->waitForStarted(-1)) {
         emit output("Error Error :(");

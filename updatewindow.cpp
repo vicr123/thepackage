@@ -11,6 +11,14 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
     ui->pushButton_2->setEnabled(false);
     ui->powerWarning->setVisible(false);
     ui->pacmanOutput->setVisible(false);
+    ui->label_6->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
+
+    watcher = new QFileSystemWatcher(this);
+    connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(lockFileChanged()));
+    connect(watcher, SIGNAL(directoryChanged(QString)), this, SLOT(lockFileChanged()));
+    watcher->addPath("/var/lib/pacman/db.lck");
+    watcher->addPath("/var/lib/pacman/");
+    lockFileChanged();
 
     QProcess* updateCheck = new QProcess();
     updateCheck->start("checkupdates");
@@ -33,7 +41,9 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
         }
     }
 
-    ui->pushButton->setEnabled(true);
+    if (!QFile("/var/lib/pacman/db.lck").exists() || ui->removePacmanLock->isChecked()) {
+        ui->pushButton->setEnabled(true);
+    }
     ui->pushButton_2->setEnabled(true);
     ui->progressBar->setVisible(false);
 
@@ -59,11 +69,13 @@ void UpdateWindow::on_pushButton_clicked()
     if (updatesComplete) {
         this->close();
     } else {
+        committing = true;
         ui->pushButton->setEnabled(false);
         ui->pushButton_2->setEnabled(false);
         ui->progressBar->setVisible(true);
         ui->pacmanOutput->setVisible(true);
         ui->updatesAvaliable->setVisible(false);
+        ui->pacmanLock->setVisible(false);
         ui->label->setText("Processing Updates...");
 
         QThread *t = new QThread();
@@ -99,5 +111,35 @@ void UpdateWindow::outputAvaliable(QString output) {
 
     if (scrollToBottom) {
         ui->pacmanOutput->verticalScrollBar()->setValue(ui->pacmanOutput->verticalScrollBar()->maximum());
+    }
+}
+
+void UpdateWindow::lockFileChanged() {
+    if (!committing) {
+        ui->removePacmanLock->setChecked(false);
+
+        if (QFile("/var/lib/pacman/db.lck").exists()) {
+            ui->pacmanLock->setVisible(true);
+            if (ui->updatesAvaliable->count() > 0) {
+                ui->pushButton->setEnabled(false);
+            }
+        } else {
+            ui->pacmanLock->setVisible(false);
+            if (ui->updatesAvaliable->count() > 0) {
+                ui->pushButton->setEnabled(true);
+            }
+        }
+    }
+}
+
+void UpdateWindow::on_removePacmanLock_toggled(bool checked)
+{
+
+    if (ui->updatesAvaliable->count() > 0) {
+        if (checked) {
+            ui->pushButton->setEnabled(true);
+        } else {
+            ui->pushButton->setEnabled(false);
+        }
     }
 }

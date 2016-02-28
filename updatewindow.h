@@ -5,6 +5,8 @@
 #include <QProcess>
 #include <QThread>
 #include <QScrollBar>
+#include <QFileSystemWatcher>
+#include <QFile>
 
 #include "updateworker.h"
 
@@ -29,10 +31,17 @@ private slots:
 
     void outputAvaliable(QString output);
 
+    void lockFileChanged();
+
+    void on_removePacmanLock_toggled(bool checked);
+
 private:
     Ui::UpdateWindow *ui;
 
     bool updatesComplete = false;
+    bool committing = false;
+
+    QFileSystemWatcher* watcher;
 };
 
 #endif // UPDATEWINDOW_H
