@@ -28,3 +28,7 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui \
     updatewindow.ui
+
+DISTFILES += \
+    thePackageUpdate.desktop \
+    thePackage.desktop
