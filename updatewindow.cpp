@@ -7,6 +7,11 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QRect screenGeometry = QApplication::desktop()->screenGeometry();
+    int x = (screenGeometry.width() - this->width()) / 2;
+    int y = (screenGeometry.height() - this->height()) / 2;
+    this->move(x, y);
+
     ui->pushButton->setEnabled(false);
     ui->pushButton_2->setEnabled(false);
     ui->powerWarning->setVisible(false);

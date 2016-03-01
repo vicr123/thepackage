@@ -13,6 +13,7 @@
 #include <QThread>
 #include <QScrollBar>
 #include <QFileSystemWatcher>
+#include <QPointer>
 
 #include "package.h"
 #include "worker.h"
@@ -34,6 +35,9 @@ public:
     QList<Package*>* displayedPackages;
     QList<Package*>* packagesToInstall;
     QList<Package*>* packagesToRemove;
+
+    QList<Package*>* aurPackages;
+    QList<Package*>* aurPackagesToInstall;
 
 private slots:
     void on_lineEdit_textEdited(const QString &arg1);
@@ -70,6 +74,8 @@ private slots:
 
     void lockFileChanged();
 
+    void on_aurCheck_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
 
@@ -79,8 +85,11 @@ private:
 
     bool readyToCommit = false;
     bool committing = false;
+    bool stopQueryingPackageNow = false;
 
     QFileSystemWatcher* watcher;
+
+    QProcess* packageQuery;
 };
 
 #endif // MAINWINDOW_H

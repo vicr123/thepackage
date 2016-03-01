@@ -6,4 +6,4 @@ Name=thePackage
 Comment=Software Package Manager
 Exec=thepackage
 Icon=muon
-Categoryies=System
+Categories=System

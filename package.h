@@ -17,6 +17,8 @@ public:
     void setVersion(QString version);
     bool isInstalled();
     void setInstalled(bool installed);
+    bool fromAur();
+    void setAur(bool aur);
 
 signals:
 
@@ -27,6 +29,7 @@ private:
     QString repoName;
     QString version;
     bool installed;
+    bool aur = false;
 };
 
 #endif // PACKAGE_H

@@ -7,6 +7,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    packageQuery = NULL;
+
+    QRect screenGeometry = QApplication::desktop()->screenGeometry();
+    int x = (screenGeometry.width() - this->width()) / 2;
+    int y = (screenGeometry.height() - this->height()) / 2;
+    this->move(x, y);
+
     for (QString arg : QApplication::arguments()) {
         if (arg == "--updates" || arg == "-u") {
             UpdateWindow *w = new UpdateWindow();
@@ -20,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->repoTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui->progressBar->setVisible(false);
     ui->pacmanOutput->setVisible(false);
+    ui->packInfoFrame->setVisible(false);
+    ui->searchingBar->setVisible(false);
     ui->label_6->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
 
     ui->frame->setParent(this);
@@ -36,6 +45,8 @@ MainWindow::MainWindow(QWidget *parent) :
     packagesToInstall = new QList<Package*>();
     packagesToRemove = new QList<Package*>();
     displayedPackages = new QList<Package*>();
+    aurPackages = new QList<Package*>();
+    aurPackagesToInstall = new QList<Package*>();
 
     QProcess* packsearch = new QProcess();
     packsearch->start("pacsearch -n \".*\"");
@@ -98,38 +109,91 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_lineEdit_textEdited(const QString &arg1)
 {
-    ui->repoTable->clearContents();
-    ui->repoTable->setRowCount(0);
-    displayedPackages->clear();
-    if (arg1 == "") {
-        ui->repoTable->setRowCount(allPackages->count());
-        int i = 0;
-        for (Package *package : *allPackages) {
-            QTableWidgetItem* nameItem = new QTableWidgetItem(package->getPackageName());
-            if (package->isInstalled()) {
-                nameItem->setIcon(QIcon::fromTheme("emblem-checked"));
-            } else {
-                nameItem->setIcon(QIcon::fromTheme("emblem-error"));
-            }
-            nameItem->setText(package->getPackageName());
-            QTableWidgetItem* repoItem = new QTableWidgetItem(package->getRepoName());
-            repoItem->setText(package->getRepoName());
-            QTableWidgetItem* versionItem = new QTableWidgetItem(package->getVersion());
-            versionItem->setText(package->getVersion());
+    if (ui->aurCheck->isChecked()) {
+        /*if (packageQuery != NULL) {
+            //roastopQueryingPackageNow = true;
+            packageQuery->terminate();
 
-            ui->repoTable->setItem(i, 0, nameItem);
-            ui->repoTable->setItem(i, 1, repoItem);
-            ui->repoTable->setItem(i, 2, versionItem);
-            displayedPackages->append(package);
-            i++;
+        }*/
+        aurPackages->clear();
+        ui->repoTable->clearContents();
+        ui->repoTable->setRowCount(0);
+
+        if (arg1.count() >= 3) {
+            ui->searchingBar->setVisible(true);
+
+            packageQuery = new QProcess();
+            packageQuery->start("package-query -As --nocolor " + arg1);
+            packageQuery->waitForStarted(-1);
+            while (packageQuery->state() != 0) {
+                QApplication::processEvents();
+                if (ui->lineEdit->text() != arg1) {
+                    return;
+                }
+            }
+
+            if (packageQuery->exitCode() != 0) {
+                return;
+            }
+
+            if (packageQuery == NULL) {
+                return;
+            }
+
+            bool processLine = true;
+            QString output(packageQuery->readAllStandardOutput());
+            for (QString package : output.split("\n")) {
+                if (!package.startsWith(" ")) {
+                    Package* pack = new Package();
+                    QStringList parts = package.split(" ");
+                    if (parts.at(0).split("/").count() != 2) {
+                        processLine = false;
+                    } else {
+                        ui->repoTable->setRowCount(ui->repoTable->rowCount() + 1);
+                        pack->setPackageName(parts.at(0).split("/").at(1));
+                        pack->setRepoName(parts.at(0).split("/").at(0));
+                        if (package.contains("[installed]")) {
+                            pack->setInstalled(true);
+                        } else {
+                            pack->setInstalled(false);
+                        }
+                        pack->setVersion(parts.at(1));
+                        pack->setAur(true);
+
+                        aurPackages->append(pack);
+
+                        int rowToAddTo = ui->repoTable->rowCount() - 1;
+                        QTableWidgetItem* nameItem = new QTableWidgetItem(pack->getPackageName());
+                        if (pack->isInstalled()) {
+                            nameItem->setIcon(QIcon::fromTheme("emblem-checked"));
+                        } else {
+                            nameItem->setIcon(QIcon::fromTheme("emblem-error"));
+                        }
+                        nameItem->setText(pack->getPackageName());
+                        QTableWidgetItem* repoItem = new QTableWidgetItem(pack->getRepoName());
+                        repoItem->setText(pack->getRepoName());
+                        QTableWidgetItem* versionItem = new QTableWidgetItem(pack->getVersion());
+                        versionItem->setText(pack->getVersion());
+
+                        ui->repoTable->setItem(rowToAddTo, 0, nameItem);
+                        ui->repoTable->setItem(rowToAddTo, 1, repoItem);
+                        ui->repoTable->setItem(rowToAddTo, 2, versionItem);
+                    }
+                }
+                processLine = !processLine;
+            }
+            delete packageQuery;
+            packageQuery = NULL;
+            ui->searchingBar->setVisible(false);
         }
     } else {
-        for (Package *package : *allPackages) {
-            if (package->getPackageName().contains(arg1)) {
-                displayedPackages->append(package);
-                ui->repoTable->setRowCount(ui->repoTable->rowCount() + 1);
-
-                int rowToAddTo = ui->repoTable->rowCount() - 1;
+        ui->repoTable->clearContents();
+        ui->repoTable->setRowCount(0);
+        displayedPackages->clear();
+        if (arg1 == "") {
+            ui->repoTable->setRowCount(allPackages->count());
+            int i = 0;
+            for (Package *package : *allPackages) {
                 QTableWidgetItem* nameItem = new QTableWidgetItem(package->getPackageName());
                 if (package->isInstalled()) {
                     nameItem->setIcon(QIcon::fromTheme("emblem-checked"));
@@ -142,13 +206,38 @@ void MainWindow::on_lineEdit_textEdited(const QString &arg1)
                 QTableWidgetItem* versionItem = new QTableWidgetItem(package->getVersion());
                 versionItem->setText(package->getVersion());
 
-                ui->repoTable->setItem(rowToAddTo, 0, nameItem);
-                ui->repoTable->setItem(rowToAddTo, 1, repoItem);
-                ui->repoTable->setItem(rowToAddTo, 2, versionItem);
+                ui->repoTable->setItem(i, 0, nameItem);
+                ui->repoTable->setItem(i, 1, repoItem);
+                ui->repoTable->setItem(i, 2, versionItem);
+                displayedPackages->append(package);
+                i++;
+            }
+        } else {
+            for (Package *package : *allPackages) {
+                if (package->getPackageName().contains(arg1)) {
+                    displayedPackages->append(package);
+                    ui->repoTable->setRowCount(ui->repoTable->rowCount() + 1);
+
+                    int rowToAddTo = ui->repoTable->rowCount() - 1;
+                    QTableWidgetItem* nameItem = new QTableWidgetItem(package->getPackageName());
+                    if (package->isInstalled()) {
+                        nameItem->setIcon(QIcon::fromTheme("emblem-checked"));
+                    } else {
+                        nameItem->setIcon(QIcon::fromTheme("emblem-error"));
+                    }
+                    nameItem->setText(package->getPackageName());
+                    QTableWidgetItem* repoItem = new QTableWidgetItem(package->getRepoName());
+                    repoItem->setText(package->getRepoName());
+                    QTableWidgetItem* versionItem = new QTableWidgetItem(package->getVersion());
+                    versionItem->setText(package->getVersion());
+
+                    ui->repoTable->setItem(rowToAddTo, 0, nameItem);
+                    ui->repoTable->setItem(rowToAddTo, 1, repoItem);
+                    ui->repoTable->setItem(rowToAddTo, 2, versionItem);
+                }
             }
         }
     }
-
     //ui->repoTable->sortItems(0);
 }
 
@@ -158,14 +247,33 @@ void MainWindow::on_pushButton_clicked()
 
     for (QModelIndex index : ui->repoTable->selectionModel()->selectedRows()) {
         int row = index.row();
-        Package* p = displayedPackages->at(row);
+        Package* p;
+        if (ui->aurCheck->isChecked()) {
+            p = aurPackages->at(row);
+        } else {
+            p = displayedPackages->at(row);
+        }
 
         if (!packagesToInstall->contains(p)) {
-            QListWidgetItem* item = new QListWidgetItem(p->getPackageName());
+
+            QListWidgetItem* item = new QListWidgetItem();
+            if (p->fromAur()) {
+                aurPackagesToInstall->append(p);
+                item->setText("(AUR) " + p->getPackageName());
+            } else {
+                packagesToInstall->append(p);
+                item->setText(p->getPackageName());
+            }
+
             item->setIcon(QIcon::fromTheme("list-add"));
             ui->transactionList->addItem(item);
-            packagesToInstall->append(p);
         }
+    }
+
+    if (ui->transactionList->count() == 0) {
+        ui->pushButton_2->setEnabled(false);
+    } else {
+        ui->pushButton_2->setEnabled(true);
     }
 }
 
@@ -195,6 +303,11 @@ void MainWindow::on_pushButton_4_clicked()
             packagesToRemove->append(p);
         }
     }
+    if (ui->transactionList->count() == 0) {
+        ui->pushButton_2->setEnabled(false);
+    } else {
+        ui->pushButton_2->setEnabled(true);
+    }
 }
 
 void MainWindow::on_repoTable_itemDoubleClicked(QTableWidgetItem *item)
@@ -208,17 +321,62 @@ void MainWindow::on_repoTable_cellChanged(int row, int column)
 void MainWindow::on_repoTable_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
 {
     if (currentRow > -1) {
-        if (displayedPackages->at(currentRow)->isInstalled()) {
-            ui->pushButton->setText("Reinstall Package");
-            ui->pushButton_4->setText("Remove Package");
-            ui->pushButton->setVisible(true);
-            ui->pushButton_4->setVisible(true);
+        if (ui->aurCheck->isChecked()) {
+            if (aurPackages->at(currentRow)->isInstalled()) {
+                ui->pushButton->setText("Reinstall Package");
+                ui->pushButton_4->setText("Remove Package");
+                ui->pushButton->setVisible(true);
+                ui->pushButton_4->setVisible(true);
+            } else {
+                ui->pushButton->setText("Install Package");
+                ui->pushButton->setVisible(true);
+                ui->pushButton_4->setVisible(false);
+            }
+            } else {
+            if (displayedPackages->at(currentRow)->isInstalled()) {
+                ui->pushButton->setText("Reinstall Package");
+                ui->pushButton_4->setText("Remove Package");
+                ui->pushButton->setVisible(true);
+                ui->pushButton_4->setVisible(true);
+            } else {
+                ui->pushButton->setText("Install Package");
+                ui->pushButton->setVisible(true);
+                ui->pushButton_4->setVisible(false);
+            }
+        }
+
+        if (ui->aurCheck->isChecked()) {
+            ui->packname->setText(ui->repoTable->item(currentRow, 0)->text());
+            ui->packdep->setVisible(false);
+            ui->packInfoFrame->setVisible(true);
 
         } else {
-            ui->pushButton->setText("Install Package");
-            ui->pushButton->setVisible(true);
-            ui->pushButton_4->setVisible(false);
+            QProcess* info = new QProcess(this);
+            info->start("pacman -Sii " + ui->repoTable->item(currentRow, 0)->text());
+            info->waitForStarted(-1);
+
+            while (info->state() != 0) {
+                QApplication::processEvents();
+            }
+
+            QStringList packInfo = QString(info->readAllStandardOutput()).split("\n");
+            packInfo.removeAll("");
+
+            for (QString info : packInfo) {
+                int index = info.length() - (info.indexOf(":") + 2);
+                QString contents = info.right(index);
+                if (info.startsWith("Description")) {
+                    ui->packname->setText(contents);
+                } else if (info.startsWith("Depends On")) {
+                    ui->packdep->setText("Package Dependencies: " + contents.replace("  ", ", "));
+                    ui->packdep->setVisible(true);
+                }
+            }
+
+            ui->packInfoFrame->setVisible(true);
         }
+    } else {
+        ui->packInfoFrame->setVisible(false);
     }
 }
 
@@ -236,19 +394,11 @@ void MainWindow::on_pushButton_2_clicked()
     QStringList packages;
     for (Package* p : *packagesToInstall) {
         packages.append(p->getPackageName());
+    }
 
-        /*QProcess* pactree = new QProcess();
-        pactree->start("pactree -u " + p->getPackageName());
-        pactree->waitForFinished();
-        QString output(pactree->readAllStandardOutput());
-        QStringList pacdep = output.split("\n");
-        for (Package* p : *allPackages) {
-            if (pacdep.contains(p->getPackageName())) {
-                if (!p->isInstalled()) {
-                    packages.append(p->getPackageName());
-                }
-            }
-        }*/
+
+    for (Package* p : *aurPackagesToInstall) {
+        packages.append(p->getPackageName() + " from AUR. Check the PKGBUILD to make sure it doesn't contain anything malicious first.");
     }
 
     for (Package* p : *packagesToRemove) {
@@ -347,6 +497,7 @@ void MainWindow::commitFinished(int code) {
     ui->pushButton_6->setVisible(false);
     ui->label_4->setText("The transaction completed successfully.");
     ui->progressBar->setVisible(false);
+    ui->aurCheck->setChecked(false);
     readyToCommit = false;
     committing = false;
 
@@ -358,6 +509,8 @@ void MainWindow::commitFinished(int code) {
     packagesToInstall = new QList<Package*>();
     packagesToRemove = new QList<Package*>();
     displayedPackages = new QList<Package*>();
+    aurPackages = new QList<Package*>();
+    aurPackagesToInstall = new QList<Package*>();
 
     QProcess* packsearch = new QProcess();
     packsearch->start("pacsearch -n \".*\"");
@@ -418,7 +571,10 @@ void MainWindow::on_pushButton_3_clicked()
         packagesToInstall->clear();
         packagesToRemove->clear();
         ui->transactionList->clear();
+
+        ui->pushButton_2->setEnabled(false);
     }
+
 }
 
 void MainWindow::on_pushButton_7_clicked()
@@ -443,10 +599,70 @@ void MainWindow::lockFileChanged() {
 
         if (QFile("/var/lib/pacman/db.lck").exists()) {
             ui->pacmanLock->setVisible(true);
-            ui->pushButton->setEnabled(false);
+            ui->pushButton_5->setEnabled(false);
         } else {
             ui->pacmanLock->setVisible(false);
-            ui->pushButton->setEnabled(true);
+            ui->pushButton_5->setEnabled(true);
         }
     }
+}
+
+void MainWindow::on_aurCheck_toggled(bool checked)
+{
+    ui->repoTable->clearContents();
+    ui->repoTable->setRowCount(0);
+    if (checked) {
+
+    } else {
+        QProcess* packsearch = new QProcess();
+        packsearch->start("pacsearch -n \".*\"");
+        packsearch->waitForFinished(-1);
+
+        QString output(packsearch->readAllStandardOutput());
+        qDebug() << output;
+        QStringList brokenOutput = output.split("\n");
+
+        bool processLine = true;
+        for (QString package : brokenOutput) {
+            if (processLine) {
+                Package* pack = new Package();
+                QStringList parts = package.split(" ");
+                if (parts.at(0).split("/").count() != 2) {
+                    processLine = false;
+                } else {
+                    ui->repoTable->setRowCount(ui->repoTable->rowCount() + 1);
+                    pack->setPackageName(parts.at(0).split("/").at(1));
+                    pack->setRepoName(parts.at(0).split("/").at(0));
+                    if (package.contains("[installed]")) {
+                        pack->setInstalled(true);
+                    } else {
+                        pack->setInstalled(false);
+                    }
+                    pack->setVersion(parts.at(1));
+
+                    allPackages->append(pack);
+                    displayedPackages->append(pack);
+
+                    int rowToAddTo = ui->repoTable->rowCount() - 1;
+                    QTableWidgetItem* nameItem = new QTableWidgetItem(pack->getPackageName());
+                    if (pack->isInstalled()) {
+                        nameItem->setIcon(QIcon::fromTheme("emblem-checked"));
+                    } else {
+                        nameItem->setIcon(QIcon::fromTheme("emblem-error"));
+                    }
+                    nameItem->setText(pack->getPackageName());
+                    QTableWidgetItem* repoItem = new QTableWidgetItem(pack->getRepoName());
+                    repoItem->setText(pack->getRepoName());
+                    QTableWidgetItem* versionItem = new QTableWidgetItem(pack->getVersion());
+                    versionItem->setText(pack->getVersion());
+
+                    ui->repoTable->setItem(rowToAddTo, 0, nameItem);
+                    ui->repoTable->setItem(rowToAddTo, 1, repoItem);
+                    ui->repoTable->setItem(rowToAddTo, 2, versionItem);
+                }
+            }
+            processLine = !processLine;
+        }
+    }
+    ui->lineEdit->setText("");
 }

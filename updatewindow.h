@@ -7,6 +7,7 @@
 #include <QScrollBar>
 #include <QFileSystemWatcher>
 #include <QFile>
+#include <QDesktopWidget>
 
 #include "updateworker.h"
 

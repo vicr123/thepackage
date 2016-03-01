@@ -36,3 +36,11 @@ bool Package::isInstalled() {
 void Package::setInstalled(bool installed) {
     this->installed = installed;
 }
+
+bool Package::fromAur() {
+    return aur;
+}
+
+void Package::setAur(bool aur) {
+    this->aur = aur;
+}

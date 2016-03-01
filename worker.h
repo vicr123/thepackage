@@ -7,6 +7,7 @@
 #include "package.h"
 #include <QProcess>
 #include <QTemporaryFile>
+#include <QDir>
 
 class MainWindow;
 
