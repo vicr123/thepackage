@@ -40,7 +40,7 @@
     <item>
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>System updates keep your computer running fast and safe.</string>
+       <string>System updates keep your computer speedy and help mitigate vulnerabilities.</string>
       </property>
      </widget>
     </item>

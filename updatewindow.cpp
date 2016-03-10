@@ -46,13 +46,31 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
         }
     }
 
+    updateCheck->start("package-query --nocolor -Au");
+    updateCheck->waitForStarted(-1);
+
+    while (updateCheck->state() != 0) {
+        QApplication::processEvents();
+    }
+
+    QStringList listOfAurUpdates = QString(updateCheck->readAllStandardOutput()).split("\n");
+    listOfAurUpdates.removeAll("");
+
+    for (QString update : listOfAurUpdates) {
+        if (update != "") {
+            QListWidgetItem *i = new QListWidgetItem("(AUR) " + update.remove("aur/"));
+            i->setIcon(QIcon::fromTheme("application-x-executable"));
+            ui->updatesAvaliable->addItem(i);
+        }
+    }
+
     if (!QFile("/var/lib/pacman/db.lck").exists() || ui->removePacmanLock->isChecked()) {
         ui->pushButton->setEnabled(true);
     }
     ui->pushButton_2->setEnabled(true);
     ui->progressBar->setVisible(false);
 
-    if (listOfUpdates.count() == 0) {
+    if (listOfUpdates.count() == 0 && listOfAurUpdates.count() == 0) {
         ui->label->setText("Thanks for stopping by. There aren't any new updates avaliable.");
         ui->pushButton->setEnabled(false);
     }

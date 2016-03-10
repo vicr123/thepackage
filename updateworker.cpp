@@ -16,6 +16,24 @@ void UpdateWorker::process() {
     connect(pacman, SIGNAL(readyReadStandardError()), this, SLOT(outputAvaliable()));
 
     QString shellScript;
+    QProcess* updateCheck = new QProcess();
+    updateCheck->start("package-query --nocolor -Au");
+    updateCheck->waitForFinished(-1);
+
+    QStringList listOfAurUpdates = QString(updateCheck->readAllStandardOutput()).split("\n");
+    listOfAurUpdates.removeAll("");
+
+    for (QString update : listOfAurUpdates) {
+        if (update != "") {
+            Package* pack = new Package();
+            pack->setAur(true);
+            pack->setPackageName(update.remove("aur/").split(" ").at(0));
+
+            for (QString command : methods::installAurPackage(pacman, pack)) {
+                shellScript.append(command);
+            }
+        }
+    }
 
     if (QFile("/var/lib/pacman/db.lck").exists()) {
         shellScript.append("rm /var/lib/pacman/db.lck\n");
@@ -51,6 +69,8 @@ void UpdateWorker::process() {
 
     }
 
+    stdOutput.append("\n[Updates complete]");
+    emit output(stdOutput);
     emit finished(pacman->exitCode());
 }
 

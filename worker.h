@@ -5,6 +5,7 @@
 
 #include "mainwindow.h"
 #include "package.h"
+#include "methods.h"
 #include <QProcess>
 #include <QTemporaryFile>
 #include <QDir>
@@ -33,6 +34,8 @@ private:
     QString stdOutput;
 
     QProcess* pacman;
+
+    QStringList installAurPackage(Package* package);
 };
 
 #endif // WORKER_H

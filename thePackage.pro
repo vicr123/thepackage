@@ -18,13 +18,15 @@ SOURCES += main.cpp\
     package.cpp \
     worker.cpp \
     updatewindow.cpp \
-    updateworker.cpp
+    updateworker.cpp \
+    methods.cpp
 
 HEADERS  += mainwindow.h \
     package.h \
     worker.h \
     updatewindow.h \
-    updateworker.h
+    updateworker.h \
+    methods.h
 
 FORMS    += mainwindow.ui \
     updatewindow.ui

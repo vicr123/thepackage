@@ -31,29 +31,14 @@ void Worker::process() {
         shellScript.append("done");
     }*/
 
-    if (mainWindow->aurPackagesToInstall->count() > 0) {
-        for (Package *package : *mainWindow->aurPackagesToInstall) {
-            //QProcess* maker = new QProcess();
-            //connect(maker, SIGNAL(readyReadStandardOutput()), this, SLOT(outputAvaliable()));
-            //connect(maker, SIGNAL(readyReadStandardError()), this, SLOT(outputAvaliable()));
+    for (Package *package : *mainWindow->aurPackagesToInstall) {
+        //QProcess* maker = new QProcess();
+        //connect(maker, SIGNAL(readyReadStandardOutput()), this, SLOT(outputAvaliable()));
+        //connect(maker, SIGNAL(readyReadStandardError()), this, SLOT(outputAvaliable()));
 
-            pacman->start("wget -O /tmp/" + package->getPackageName() + ".tar.gz https://aur.archlinux.org/cgit/aur.git/snapshot/" + package->getPackageName() + ".tar.gz");
-            pacman->waitForFinished(-1);
-            pacman->start("tar -xzf /tmp/" + package->getPackageName() + ".tar.gz -C /tmp/");
-            pacman->waitForFinished(-1);
-            pacman->setWorkingDirectory("/tmp/" + package->getPackageName());
-            pacman->start("makepkg -m");
-            pacman->waitForFinished(-1);
-            for (QString file : QDir("/tmp/" + package->getPackageName()).entryList()) {
-                if (file.endsWith(".tar.xz")) {
-                    shellScript.append("pacman -U --noconfirm --noprogressbar --color never /tmp/" + package->getPackageName() + "/" + file + "\n");
-                    shellScript.append("rm -rf /tmp/" + package->getPackageName() + "\n");
-                    shellScript.append("rm -rf /tmp/" + package->getPackageName() + ".tar.gz" + "\n");
-
-                }
-            }
+        for (QString command : methods::installAurPackage(pacman, package)) {
+            shellScript.append(command);
         }
-
     }
 
     if (mainWindow->packagesToRemove->count() > 0) {

@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QFile>
 #include <QTemporaryFile>
+#include "package.h"
+#include "methods.h"
 
 class UpdateWorker : public QObject
 {

@@ -10,6 +10,7 @@
 #include <QDesktopWidget>
 
 #include "updateworker.h"
+#include "methods.h"
 
 namespace Ui {
 class UpdateWindow;
