@@ -3,7 +3,8 @@
 Type=Application
 Version=1.0
 Name=thePackage
-Comment=Software Package Manager
+Comment=Package Manager
+GenericName=Package Manager
 Exec=thepackage
 Icon=muon
 Categories=System

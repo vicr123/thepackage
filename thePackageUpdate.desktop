@@ -3,7 +3,8 @@
 Type=Application
 Version=1.0
 Name=thePackage Updater
-Comment=System Software Updates
+Comment=System Updates
+GenericName=System Updates
 Exec=thepackage -u
 Icon=system-software-update
 Categories=System

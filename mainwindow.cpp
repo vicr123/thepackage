@@ -666,3 +666,8 @@ void MainWindow::on_aurCheck_toggled(bool checked)
     }
     ui->lineEdit->setText("");
 }
+
+void MainWindow::on_lineEdit_textChanged(const QString &arg1)
+{
+
+}

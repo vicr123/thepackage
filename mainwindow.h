@@ -76,6 +76,8 @@ private slots:
 
     void on_aurCheck_toggled(bool checked);
 
+    void on_lineEdit_textChanged(const QString &arg1);
+
 private:
     Ui::MainWindow *ui;
 
