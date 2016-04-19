@@ -29,7 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pacmanOutput->setVisible(false);
     ui->packInfoFrame->setVisible(false);
     ui->searchingBar->setVisible(false);
+    ui->aurWarningFrame->setVisible(false);
     ui->label_6->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
+    ui->label_7->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
 
     ui->frame->setParent(this);
     ui->frame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
@@ -611,6 +613,7 @@ void MainWindow::on_aurCheck_toggled(bool checked)
 {
     ui->repoTable->clearContents();
     ui->repoTable->setRowCount(0);
+    ui->aurWarningFrame->setVisible(checked);
     if (checked) {
 
     } else {

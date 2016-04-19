@@ -17,6 +17,8 @@ UpdateWindow::UpdateWindow(QWidget *parent) :
     ui->powerWarning->setVisible(false);
     ui->pacmanOutput->setVisible(false);
     ui->label_6->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
+    ui->label_7->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
+    ui->rebootFrame->setVisible(false);
 
     watcher = new QFileSystemWatcher(this);
     connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(lockFileChanged()));
@@ -106,16 +108,16 @@ void UpdateWindow::on_pushButton_clicked()
         w->moveToThread(t);
         //connect(w, SIGNAL(error(QString)), this, SLOT(errorString(QString)));
         connect(t, SIGNAL(started()), w, SLOT(process()));
-        connect(w, SIGNAL(finished(int)), this, SLOT(updateFinished(int)));
-        connect(w, SIGNAL(finished(int)), t, SLOT(quit()));
-        connect(w, SIGNAL(finished(int)), w, SLOT(deleteLater()));
+        connect(w, SIGNAL(finished(bool, int)), this, SLOT(updateFinished(bool, int)));
+        connect(w, SIGNAL(finished(bool, int)), t, SLOT(quit()));
+        connect(w, SIGNAL(finished(bool, int)), w, SLOT(deleteLater()));
         connect(t, SIGNAL(finished()), t, SLOT(deleteLater()));
         connect(w, SIGNAL(output(QString)), this, SLOT(outputAvaliable(QString)));
         t->start();
     }
 }
 
-void UpdateWindow::updateFinished(int returnCode) {
+void UpdateWindow::updateFinished(bool rebootRequired, int returnCode) {
     ui->label->setText("Updates complete.");
     ui->pushButton->setText("Finish");
     ui->pushButton->setIcon(QIcon::fromTheme("dialog-ok"));
@@ -123,6 +125,10 @@ void UpdateWindow::updateFinished(int returnCode) {
     ui->pushButton_2->setVisible(false);
     ui->progressBar->setVisible(false);
     updatesComplete = true;
+
+    if (rebootRequired) {
+        ui->rebootFrame->setVisible(true);
+    }
 }
 
 void UpdateWindow::outputAvaliable(QString output) {
@@ -165,4 +171,9 @@ void UpdateWindow::on_removePacmanLock_toggled(bool checked)
             ui->pushButton->setEnabled(false);
         }
     }
+}
+
+void UpdateWindow::on_pushButton_3_clicked()
+{
+    QProcess::startDetached("shutdown -r now");
 }

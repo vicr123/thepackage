@@ -29,13 +29,15 @@ private slots:
 
     void on_pushButton_clicked();
 
-    void updateFinished(int returnCode);
+    void updateFinished(bool rebootRequired, int returnCode);
 
     void outputAvaliable(QString output);
 
     void lockFileChanged();
 
     void on_removePacmanLock_toggled(bool checked);
+
+    void on_pushButton_3_clicked();
 
 private:
     Ui::UpdateWindow *ui;

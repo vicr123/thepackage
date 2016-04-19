@@ -71,7 +71,7 @@ void UpdateWorker::process() {
 
     stdOutput.append("\n[Updates complete]");
     emit output(stdOutput);
-    emit finished(pacman->exitCode());
+    emit finished(rebootRequired, pacman->exitCode());
 }
 
 void UpdateWorker::outputAvaliable() {
@@ -81,4 +81,8 @@ void UpdateWorker::outputAvaliable() {
     stdOutput.append(pacOutput);
 
     emit output(stdOutput);
+
+    if (pacOutput.contains("upgrading linux...")) { //System reboot required
+        this->rebootRequired = true;
+    }
 }

@@ -21,7 +21,7 @@ public slots:
     void outputAvaliable();
 
 signals:
-    void finished(int);
+    void finished(bool, int);
     void error(QString err);
     void output(QString output);
 
@@ -29,6 +29,8 @@ private:
     QString stdOutput;
 
     QProcess* pacman;
+
+    bool rebootRequired = false;
 };
 
 #endif // UPDATEWORKER_H
