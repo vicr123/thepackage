@@ -78,6 +78,8 @@ private slots:
 
     void on_lineEdit_textChanged(const QString &arg1);
 
+    void on_actionExit_triggered();
+
 private:
     Ui::MainWindow *ui;
 

@@ -674,3 +674,8 @@ void MainWindow::on_lineEdit_textChanged(const QString &arg1)
 {
 
 }
+
+void MainWindow::on_actionExit_triggered()
+{
+    QApplication::exit();
+}
