@@ -14,6 +14,7 @@
 #include <QScrollBar>
 #include <QFileSystemWatcher>
 #include <QPointer>
+#include <QMap>
 
 #include "package.h"
 #include "worker.h"
@@ -80,10 +81,15 @@ private slots:
 
     void on_actionExit_triggered();
 
+    void on_packageInfoButton_clicked();
+
+    void on_pushButton_8_clicked();
+
 private:
     Ui::MainWindow *ui;
 
     void resizeEvent(QResizeEvent *event);
+    void closeEvent(QCloseEvent *event);
 
     void processTransaction(QStringList install, QStringList remove);
 

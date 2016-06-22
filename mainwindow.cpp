@@ -33,8 +33,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label_6->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
     ui->label_7->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(32, 32));
 
-    ui->frame->setParent(this);
-    ui->frame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
+    ui->commitFrame->setParent(this);
+    ui->infoFrame->setParent(this);
+    ui->commitFrame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
+    ui->infoFrame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
 
     watcher = new QFileSystemWatcher(this);
     connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(lockFileChanged()));
@@ -107,6 +109,15 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    if (committing) {
+        QMessageBox::warning(this, "Committing", "We're making changes to packages. You'll need to wait for this to finish before you can close thePackage.", QMessageBox::Ok, QMessageBox::Ok);
+        event->ignore();
+    } else {
+        event->accept();
+    }
 }
 
 void MainWindow::on_lineEdit_textEdited(const QString &arg1)
@@ -354,11 +365,21 @@ void MainWindow::on_repoTable_currentCellChanged(int currentRow, int currentColu
 
         } else {
             QProcess* info = new QProcess(this);
-            info->start("pacman -Sii " + ui->repoTable->item(currentRow, 0)->text());
+            info->start("pacman -Qi " + ui->repoTable->item(currentRow, 0)->text());
             info->waitForStarted(-1);
 
             while (info->state() != 0) {
                 QApplication::processEvents();
+            }
+
+            if (info->exitCode() != 0) {
+                info->start("pacman -Si " + ui->repoTable->item(currentRow, 0)->text());
+                info->waitForStarted(-1);
+
+                while (info->state() != 0) {
+                    QApplication::processEvents();
+                }
+
             }
 
             QStringList packInfo = QString(info->readAllStandardOutput()).split("\n");
@@ -383,9 +404,11 @@ void MainWindow::on_repoTable_currentCellChanged(int currentRow, int currentColu
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
-    //ui->frame->setGeometry();
-    if (ui->frame->y() == 10) {
-        ui->frame->resize(this->width() - 20, this->height() - 20);
+    if (ui->commitFrame->y() == 10) {
+        ui->commitFrame->resize(this->width() - 20, this->height() - 20);
+    }
+    if (ui->infoFrame->y() == 10) {
+        ui->infoFrame->resize(this->width() - 20, this->height() - 20);
     }
     //event->accept();
 }
@@ -393,6 +416,7 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 void MainWindow::on_pushButton_2_clicked()
 {
     ui->confirmList->clear();
+    ui->label_4->setText("Just a final check that this is what you want to do.");
     QStringList packages;
     for (Package* p : *packagesToInstall) {
         packages.append(p->getPackageName());
@@ -422,7 +446,7 @@ void MainWindow::on_pushButton_2_clicked()
     ui->pacmanOutput->setVisible(false);
     ui->confirmList->setVisible(true);
 
-    QPropertyAnimation* anim = new QPropertyAnimation(ui->frame, "geometry");
+    QPropertyAnimation* anim = new QPropertyAnimation(ui->commitFrame, "geometry");
     anim->setStartValue(QRect(10, this->height(), this->width() - 20, this->height() - 20));
     anim->setEndValue(QRect(10, 10, this->width() - 20, this->height() - 20));
     anim->setDuration(500);
@@ -435,7 +459,7 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_6_clicked()
 {
     readyToCommit = false;
-    QPropertyAnimation* anim = new QPropertyAnimation(ui->frame, "geometry");
+    QPropertyAnimation* anim = new QPropertyAnimation(ui->commitFrame, "geometry");
     anim->setStartValue(QRect(10, 10, this->width() - 20, this->height() - 20));
     anim->setEndValue(QRect(10, this->height(), this->width() - 20, this->height() - 20));
     anim->setDuration(500);
@@ -447,7 +471,8 @@ void MainWindow::on_pushButton_6_clicked()
 }
 
 void MainWindow::confirmAnimationFinished() {
-    ui->frame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
+    ui->commitFrame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
+    ui->infoFrame->setGeometry(10, -this->height(), this->width() - 20, this->height() - 20);
 
 }
 
@@ -678,4 +703,111 @@ void MainWindow::on_lineEdit_textChanged(const QString &arg1)
 void MainWindow::on_actionExit_triggered()
 {
     QApplication::exit();
+}
+
+
+void MainWindow::on_packageInfoButton_clicked()
+{
+    ui->infoLoadingFrame->setVisible(true);
+    ui->infoDesc->setVisible(false);
+    ui->infoDependencies->setVisible(false);
+    ui->infoInstallReason->setVisible(false);
+    ui->infoFileTree->clear();
+
+    QPropertyAnimation* anim = new QPropertyAnimation(ui->infoFrame, "geometry");
+    anim->setStartValue(QRect(10, this->height(), this->width() - 20, this->height() - 20));
+    anim->setEndValue(QRect(10, 10, this->width() - 20, this->height() - 20));
+    anim->setDuration(500);
+
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+
+    anim->start();
+
+    Package* currentPackage = displayedPackages->at(ui->repoTable->selectedItems().first()->row());
+    ui->infoName->setText(currentPackage->getPackageName());
+
+    QProcess* info = new QProcess(this);
+    info->start("pacman -Qi " + currentPackage->getPackageName());
+    info->waitForStarted(-1);
+
+    while (info->state() != 0) {
+        QApplication::processEvents();
+    }
+
+    QStringList packInfo = QString(info->readAllStandardOutput()).split("\n");
+    packInfo.removeAll("");
+
+    for (QString info : packInfo) {
+        int index = info.length() - (info.indexOf(":") + 2);
+        QString contents = info.right(index);
+        if (info.startsWith("Description")) {
+            ui->infoDesc->setText(contents);
+            ui->infoDesc->setVisible(true);
+        } else if (info.startsWith("Depends On")) {
+            ui->infoDependencies->setText("Package Dependencies: " + contents.replace("  ", ", "));
+            ui->infoDependencies->setVisible(true);
+        } else if (info.startsWith("Install Reason")) {
+            if (info.contains("Explicitly Installed")) {
+                ui->infoInstallReason->setText("Install Reason: Installed by User");
+            } else {
+                ui->infoInstallReason->setText("Install Reason: Installed as a dependency of another package");
+            }
+            ui->infoInstallReason->setVisible(true);
+        }
+    }
+
+    info = new QProcess(this);
+    info->start("pacman -Ql " + currentPackage->getPackageName());
+    info->waitForStarted(-1);
+
+    while (info->state() != 0) {
+        QApplication::processEvents();
+    }
+
+    QStringList filetree = QString(info->readAllStandardOutput()).split("\n");
+    filetree.removeAll("");
+
+    QMap<QString, QTreeWidgetItem*> map;
+
+
+    for (QString file : filetree) {
+        file = file.remove(0, currentPackage->getPackageName().length() + 1);
+        if (file.endsWith("/")) { //This is a directory
+            QStringList path = file.split("/", QString::SkipEmptyParts);
+            QTreeWidgetItem* item = new QTreeWidgetItem();
+            item->setText(0, path.last() + "/");
+
+            QDir dir(file);
+            dir.cdUp();
+
+            if (dir.path() == "/") {
+                ui->infoFileTree->addTopLevelItem(item);
+            } else if (map.keys().contains(dir.path() + "/")) {
+                map.value(dir.path() + "/")->addChild(item);
+            }
+            map.insert(file, item);
+        } else {
+            QStringList path = file.split("/");
+            if (map.keys().contains(file.left(file.lastIndexOf("/") + 1))) {
+                QTreeWidgetItem* item = new QTreeWidgetItem();
+                item->setText(0, path.last());
+                map.value(file.left(file.lastIndexOf("/") + 1))->addChild(item);
+            }
+        }
+    }
+
+    ui->infoLoadingFrame->setVisible(false);
+}
+
+void MainWindow::on_pushButton_8_clicked()
+{
+    QPropertyAnimation* anim = new QPropertyAnimation(ui->infoFrame, "geometry");
+    anim->setStartValue(QRect(10, 10, this->width() - 20, this->height() - 20));
+    anim->setEndValue(QRect(10, this->height(), this->width() - 20, this->height() - 20));
+    anim->setDuration(500);
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+
+    connect(anim, SIGNAL(finished()), this, SLOT(confirmAnimationFinished()));
+
+    anim->start();
 }
