@@ -41,13 +41,28 @@ void Worker::process() {
         }
     }
 
+    for (Package *package : *mainWindow->filePackagesToInstall) {
+        shellScript.append("pacman -U --noconfirm --noprogressbar --color never " + package->getPackageName() + "\n");
+    }
+
     if (mainWindow->packagesToRemove->count() > 0) {
-        QString toRemove;
+        QString toRemove = "";
+        QString toRemoveNoDeps = "";
         for (Package *package : *mainWindow->packagesToRemove) {
-            toRemove.append(" " + package->getPackageName());
+            if (package->includeDeps()) {
+                toRemove.append(" " + package->getPackageName());
+            } else {
+                toRemoveNoDeps.append(" " + package->getPackageName());
+            }
         }
 
-        shellScript.append("pacman -Rs --noconfirm --noprogressbar --color never" + toRemove + "\n");
+        if (toRemove != "") {
+            shellScript.append("pacman -Rs --noconfirm --noprogressbar --color never" + toRemove + "\n");
+        }
+
+        if (toRemoveNoDeps != "") {
+            shellScript.append("pacman -R --noconfirm --noprogressbar --color never" + toRemoveNoDeps + "\n");
+        }
     }
 
 
@@ -71,7 +86,8 @@ void Worker::process() {
     shell->setAutoRemove(false);
     delete shell;
 
-    pacman->start("kdesu --noignorebutton -t -d \"" + tempFile + "\"");
+    //pacman->start("kdesu --noignorebutton -t -d \"" + tempFile + "\"");
+    pacman->start("pkexec bash \"" + tempFile + "\"");
 
     if (!pacman->waitForStarted(-1)) {
         emit output("Error Error :(");

@@ -44,3 +44,11 @@ bool Package::fromAur() {
 void Package::setAur(bool aur) {
     this->aur = aur;
 }
+
+bool Package::includeDeps() {
+    return this->deps;
+}
+
+void Package::setIncludeDeps(bool deps) {
+    this->deps = deps;
+}

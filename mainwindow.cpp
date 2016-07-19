@@ -51,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
     displayedPackages = new QList<Package*>();
     aurPackages = new QList<Package*>();
     aurPackagesToInstall = new QList<Package*>();
+    filePackagesToInstall = new QList<Package*>();
 
     QProcess* packsearch = new QProcess();
     packsearch->start("pacsearch -n \".*\"");
@@ -308,6 +309,7 @@ void MainWindow::on_pushButton_4_clicked()
     for (QModelIndex index : ui->repoTable->selectionModel()->selectedRows()) {
         int row = index.row();
         Package* p = displayedPackages->at(row);
+        p->setIncludeDeps(false);
 
         if (!packagesToRemove->contains(p)) {
             QListWidgetItem* item = new QListWidgetItem(p->getPackageName());
@@ -340,10 +342,12 @@ void MainWindow::on_repoTable_currentCellChanged(int currentRow, int currentColu
                 ui->pushButton_4->setText("Remove Package");
                 ui->pushButton->setVisible(true);
                 ui->pushButton_4->setVisible(true);
+                ui->removePackageAndDependencies->setVisible(true);
             } else {
                 ui->pushButton->setText("Install Package");
                 ui->pushButton->setVisible(true);
                 ui->pushButton_4->setVisible(false);
+                ui->removePackageAndDependencies->setVisible(false);
             }
             } else {
             if (displayedPackages->at(currentRow)->isInstalled()) {
@@ -351,10 +355,12 @@ void MainWindow::on_repoTable_currentCellChanged(int currentRow, int currentColu
                 ui->pushButton_4->setText("Remove Package");
                 ui->pushButton->setVisible(true);
                 ui->pushButton_4->setVisible(true);
+                ui->removePackageAndDependencies->setVisible(true);
             } else {
                 ui->pushButton->setText("Install Package");
                 ui->pushButton->setVisible(true);
                 ui->pushButton_4->setVisible(false);
+                ui->removePackageAndDependencies->setVisible(false);
             }
         }
 
@@ -422,6 +428,9 @@ void MainWindow::on_pushButton_2_clicked()
         packages.append(p->getPackageName());
     }
 
+    for (Package* p : *filePackagesToInstall) {
+        packages.append(p->getPackageName());
+    }
 
     for (Package* p : *aurPackagesToInstall) {
         packages.append(p->getPackageName() + " from AUR. Check the PKGBUILD to make sure it doesn't contain anything malicious first.");
@@ -810,4 +819,50 @@ void MainWindow::on_pushButton_8_clicked()
     connect(anim, SIGNAL(finished()), this, SLOT(confirmAnimationFinished()));
 
     anim->start();
+}
+
+void MainWindow::on_removePackageAndDependencies_clicked()
+{
+    for (QModelIndex index : ui->repoTable->selectionModel()->selectedRows()) {
+        int row = index.row();
+        Package* p = displayedPackages->at(row);
+
+        if (!packagesToRemove->contains(p)) {
+            QListWidgetItem* item = new QListWidgetItem(p->getPackageName() + " + dep.");
+            item->setIcon(QIcon::fromTheme("edit-delete"));
+            ui->transactionList->addItem(item);
+            packagesToRemove->append(p);
+        }
+    }
+    if (ui->transactionList->count() == 0) {
+        ui->pushButton_2->setEnabled(false);
+    } else {
+        ui->pushButton_2->setEnabled(true);
+    }
+}
+
+void MainWindow::on_actionInstall_Local_Package_triggered()
+{
+    QFileDialog* dialog = new QFileDialog();
+    dialog->setAcceptMode(QFileDialog::AcceptOpen);
+    dialog->setNameFilters(QStringList() << "Packages (*.tar.xz)");
+    if (dialog->exec() == QDialog::Accepted) {
+        for (QString file : dialog->selectedFiles()) {
+            Package* p = new Package();
+            p->setInstalled(false);
+            p->setPackageName(file);
+            filePackagesToInstall->append(p);
+
+            QListWidgetItem* item = new QListWidgetItem("Local File");
+            item->setIcon(QIcon::fromTheme("list-add"));
+            ui->transactionList->addItem(item);
+        }
+
+        if (ui->transactionList->count() == 0) {
+            ui->pushButton_2->setEnabled(false);
+        } else {
+            ui->pushButton_2->setEnabled(true);
+        }
+    }
+    delete dialog;
 }

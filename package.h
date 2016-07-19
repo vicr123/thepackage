@@ -19,6 +19,8 @@ public:
     void setInstalled(bool installed);
     bool fromAur();
     void setAur(bool aur);
+    bool includeDeps();
+    void setIncludeDeps(bool deps);
 
 signals:
 
@@ -30,6 +32,7 @@ private:
     QString version;
     bool installed;
     bool aur = false;
+    bool deps = true;
 };
 
 #endif // PACKAGE_H

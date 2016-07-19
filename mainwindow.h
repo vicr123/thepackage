@@ -15,6 +15,7 @@
 #include <QFileSystemWatcher>
 #include <QPointer>
 #include <QMap>
+#include <QFileDialog>
 
 #include "package.h"
 #include "worker.h"
@@ -36,6 +37,7 @@ public:
     QList<Package*>* displayedPackages;
     QList<Package*>* packagesToInstall;
     QList<Package*>* packagesToRemove;
+    QList<Package*>* filePackagesToInstall;
 
     QList<Package*>* aurPackages;
     QList<Package*>* aurPackagesToInstall;
@@ -84,6 +86,10 @@ private slots:
     void on_packageInfoButton_clicked();
 
     void on_pushButton_8_clicked();
+
+    void on_removePackageAndDependencies_clicked();
+
+    void on_actionInstall_Local_Package_triggered();
 
 private:
     Ui::MainWindow *ui;

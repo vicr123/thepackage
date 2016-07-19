@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>822</width>
-    <height>953</height>
+    <width>901</width>
+    <height>662</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -192,6 +192,16 @@
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="removePackageAndDependencies">
+               <property name="text">
+                <string>Remove Package and Dependencies</string>
+               </property>
+               <property name="icon">
+                <iconset theme="edit-delete"/>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="horizontalSpacer">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -287,6 +297,12 @@
     </item>
     <item>
      <widget class="QFrame" name="commitFrame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Ignored">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -445,6 +461,12 @@
     </item>
     <item>
      <widget class="QFrame" name="infoFrame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Ignored">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
@@ -570,14 +592,15 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>822</width>
-     <height>23</height>
+     <width>901</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>Fi&amp;le</string>
     </property>
+    <addaction name="actionInstall_Local_Package"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -589,6 +612,11 @@
    </property>
    <property name="text">
     <string>&amp;Exit</string>
+   </property>
+  </action>
+  <action name="actionInstall_Local_Package">
+   <property name="text">
+    <string>Install Local Package</string>
    </property>
   </action>
  </widget>
